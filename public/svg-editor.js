@@ -16,15 +16,18 @@ var transformFor = function(options) {
 var TextLayer = exports.TextLayer = React.createClass({displayName: 'TextLayer',
 	render: function() {
 		var layer = this.props.layer;
-		return React.DOM.text( {x:layer.width/2, y:layer.height/2, textAnchor:"middle"}, layer.text);
+		var pos = layer.position;
+		return React.DOM.text( {x:pos.width/2, y:pos.height/2, textAnchor:"middle"}, layer.text);
 	}
 });
 
 var RectLayer = exports.RectLayer = React.createClass({displayName: 'RectLayer',
 	render: function() {
 		var layer = this.props.layer;
-		var style = { fill: layer.fill };
-		return React.DOM.rect( {x:"0", y:"0", width:layer.width, height:layer.height, style:style});
+		var pos = layer.position;
+		var style = { fill: layer.fill || "transparent" };
+		return React.DOM.rect( {className:layer.className, style:style,
+					x:"0", y:"0", width:pos.width, height:pos.height});
 	}
 });
 
@@ -35,11 +38,24 @@ var concreteClassForType = {
 };
 
 var Layer = exports.Layer = React.createClass({displayName: 'Layer',
+	handleMouseDown: function(e) {
+		this.props.selectLayer(this.props.layer);
+	},
+	render: function() {
+		var layer = this.props.layer;
+		var child = this.transferPropsTo(concreteClassForType[layer.type]());
+		return React.DOM.g( {transform:transformFor(layer.position), onMouseDown:this.handleMouseDown}, 
+				  child
+				);
+	}
+});
+
+var ControlLayer = exports.ControlLayer = React.createClass({displayName: 'ControlLayer',
 	getInitialState: function() {
 		return { mouseDown: false, lastMouseX: 0, lastMouseY: 0 };
 	},
 	handleMouseDown: function(e) {
-		this.props.handleDrag(true, this.handleMouseMove.bind(this), this.handleMouseUp.bind(this))
+		this.props.handleDrag(true, this.handleMouseMove, this.handleMouseUp)
 		this.setState({ mouseDown: true, lastMouseX: e.pageX, lastMouseY: e.pageY });
 	},
 	handleMouseUp: function(e) {
@@ -48,40 +64,45 @@ var Layer = exports.Layer = React.createClass({displayName: 'Layer',
 	},
 	handleMouseMove: function(e) {
 		var layer = this.props.layer;
+		var newPosition = Object.create(layer.position);
+		newPosition.x += e.pageX - this.state.lastMouseX;
+		newPosition.y += e.pageY - this.state.lastMouseY;
+
 		this.props.update(layer, { 
-			x: layer.x + e.pageX - this.state.lastMouseX,
-			y: layer.y + e.pageY - this.state.lastMouseY
+			position: newPosition
 		});
 		this.setState({ lastMouseX: e.pageX, lastMouseY: e.pageY });
-	},
+	},	
 	render: function() {
+		if(!this.props.layer) return React.DOM.g(null);
 		var layer = this.props.layer;
+		var halo = { type: 'rect', className: 'halo', position: layer.position };
 		var child = this.transferPropsTo(concreteClassForType[layer.type]());
-		return React.DOM.g( {transform:transformFor(layer),
-				  	onMouseDown:this.state.mouseDown ? Function.noop : this.handleMouseDown}, 
-				  child
+		return React.DOM.g( {transform:transformFor(layer.position), onMouseDown:this.handleMouseDown}, 
+				  RectLayer( {layer:halo})
 				);
 	}
-})
+});
 },{"react":133}],2:[function(require,module,exports){
 /** @jsx React.DOM */
 var React = require("react");
 var Layer = require("./layers").Layer;
+var ControlLayer = require("./layers").ControlLayer;
 
 var initialImage = {
 	width: 800,
 	height: 600,
 	layers: [
-		{ type: "text", x: 400, y: 300, r: 20, width: 200, height: 100, text: "Hello, world!"},
-		{ type: "text", x: 400, y: 300, r: 0, width: 200, height: 100, text: "Hello, world!"},
-		{ type: "rect", x: 20, y: 20, r: 50, width: 20, height: 50, fill: "green" }
+		{ type: "text", position: { x: 400, y: 300, r: 20, width: 200, height: 100 }, text: "Hello, world!"},
+		{ type: "text", position: { x: 400, y: 300, r: 0, width: 200, height: 100 }, text: "Hello, world!"},
+		{ type: "rect", position: { x: 20, y: 20, r: 50, width: 20, height: 50 }, fill: "green" }
 	]
 };
 
 
 var SVGEditor = React.createClass({displayName: 'SVGEditor',
 	getInitialState: function() {
-		return { image: initialImage, dragging: false };
+		return { image: initialImage, dragging: false, selectedLayer: undefined };
 	},
 	handleDrag: function(dragging, onMove, onUp) {
 		this.handleMouseMove = onMove;
@@ -94,16 +115,29 @@ var SVGEditor = React.createClass({displayName: 'SVGEditor',
 		}
 		this.setState({ image: this.state.image });
 	},
+	selectLayer: function(layer) {
+		this.setState({ selectedLayer: layer });
+	},
 	render: function() {
 		var image = this.state.image;
-		var layers = image.layers.map(function(l) {
-			return Layer( {layer:l, handleDrag:this.handleDrag, update:this.updateLayer});
-		}.bind(this));
 		var dragging = this.state.dragging;
-		return React.DOM.svg( {height:image.height, width:image.width,
+
+		var layers = image.layers.map(function(l) {
+			return Layer( {layer:l, selectLayer:this.selectLayer});
+		}.bind(this));
+
+		return React.DOM.svg( {className:dragging ? 'dragging' : 'not-dragging',
+						height:image.height, width:image.width,
 						onMouseMove:dragging ? this.handleMouseMove : Function.noop,
 						onMouseUp:dragging ? this.handleMouseUp : Function.noop}, 
-					layers
+
+					/* image layers */
+					layers,
+
+					/* control layers */
+					ControlLayer( {layer:this.state.selectedLayer, 
+						handleDrag:this.handleDrag, 
+						update:this.updateLayer})
 				);
 	}
 });

@@ -1,0 +1,22 @@
+body {
+	background: #333;
+}
+
+svg {
+	border: 1px solid #ddd;
+	background: white;
+   -moz-user-select: none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   -ms-user-select: none;
+   user-select: none;
+}
+
+svg.dragging { cursor: pointer; }
+
+svg * { cursor: pointer;}
+
+rect.halo {
+	stroke: #4da9f0;
+	stroke-width: 1px;
+}
