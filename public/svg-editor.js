@@ -2,12 +2,13 @@
 /** @jsx React.DOM */
 var React = require("react");
 
-var image = {
+var imageData = {
 	width: 800,
 	height: 600,
 	layers: [
 		{ type: "text", x: 400, y: 300, r: 20, width: 200, height: 100, text: "Hello, world!"},
-		{ type: "text", x: 400, y: 300, r: 0, width: 200, height: 100, text: "Hello, world!"}
+		{ type: "text", x: 400, y: 300, r: 0, width: 200, height: 100, text: "Hello, world!"},
+		{ type: "image", x: 0, y: 0, r: 0, width: 200, height: 40, url: "http://d1x1klo9zku3iu.cloudfront.net/assets/external/posts/top_image-0fa5445043c1dcc1a879d74e7c15bf23.jpg" }
 	]
 };
 
@@ -20,7 +21,7 @@ var transformFor = function(options) {
 		r += "rotate(" + options.r + "," + options.width/2 + "," + options.height/2 + ") ";
 	}
 	return r;
-}
+};
 
 var TextLayer = React.createClass({displayName: 'TextLayer',
 	render: function() {
@@ -31,18 +32,38 @@ var TextLayer = React.createClass({displayName: 'TextLayer',
 	}
 });
 
-var SVGEditor = React.createClass({displayName: 'SVGEditor',
+var ImageLayer = React.createClass({displayName: 'ImageLayer',
 	render: function() {
-		var layers = this.props.image.layers.map(function(l) {
-			return TextLayer( {layer:l});
-		});
-		return React.DOM.svg( {height:this.props.image.height, width:this.props.image.width}, 
-			layers
-		);
+		var layer = this.props.layer;
+		return React.DOM.image({ width: layer.width, height: layer.height, "href": layer.url });
 	}
 });
 
-React.renderComponent(SVGEditor( {image:image}), document.body);
+var concreteClassForType = {
+	text: TextLayer,
+	image: ImageLayer
+};
+
+var Layer = React.createClass({displayName: 'Layer',
+	render: function() {
+		return this.transferPropsTo(concreteClassForType[this.props.layer.type]());
+	}
+})
+
+var SVGEditor = React.createClass({displayName: 'SVGEditor',
+	render: function() {
+		var image = this.props.image;
+		var layers = image.layers.map(function(l) {
+			return Layer( {layer:l});
+		});
+		var svgOpts = { height: image.height, width: image.width,
+										xmlns: "http://www.w3.org/2000/svg",
+     									"xmlns:xlink": "http://www.w3.org/1999/xlink" };
+		return React.DOM.svg.apply(null, [svgOpts].concat(layers));
+	}
+});
+
+React.renderComponent(SVGEditor( {image:imageData}), document.body);
 },{"react":132}],2:[function(require,module,exports){
 // shim for using process in browser
 
@@ -6482,6 +6503,7 @@ var ReactDOM = objMapKeyVal({
   circle: false,
   defs: false,
   g: false,
+  image: false,
   line: false,
   linearGradient: false,
   path: false,
@@ -15168,6 +15190,7 @@ var shouldWrap = {
   'circle': true,
   'defs': true,
   'g': true,
+  'image': true,
   'line': true,
   'linearGradient': true,
   'path': true,
@@ -15209,6 +15232,7 @@ var markupWrap = {
   'circle': svgWrap,
   'defs': svgWrap,
   'g': svgWrap,
+  'image': svgWrap,
   'line': svgWrap,
   'linearGradient': svgWrap,
   'path': svgWrap,
