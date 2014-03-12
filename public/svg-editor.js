@@ -99,15 +99,75 @@ var initialImage = {
 	]
 };
 
+var emptyLayerOfType = function(type){
+	var layer = { type: type, position: { x: 0, y: 0, r: 0, width: 100, height: 30 } }
+	if(type == "rect") layer.fill = "red";
+	if(type == "text") layer.text = "Text";
+	return layer;
+};
 
-var SVGEditor = React.createClass({displayName: 'SVGEditor',
+var ImagePreview = React.createClass({displayName: 'ImagePreview',
 	getInitialState: function() {
-		return { image: initialImage, dragging: false, selectedLayer: undefined };
+		return { dragging: false };
 	},
 	handleDrag: function(dragging, onMove, onUp) {
 		this.handleMouseMove = onMove;
 		this.handleMouseUp = onUp;
 		this.setState({ dragging: dragging });
+	},
+	render: function() {
+		var image = this.props.image;
+		var dragging = this.props.dragging;
+
+		var layers = image.layers.map(function(l) {
+			return Layer( {layer:l, selectLayer:this.props.selectLayer});
+		}.bind(this));
+
+		return React.DOM.div( {className:"image-preview"}, 
+
+				React.DOM.svg( {className:dragging ? 'dragging' : 'not-dragging',
+						height:image.height, width:image.width,
+						onMouseMove:dragging ? this.handleMouseMove : Function.noop,
+						onMouseUp:dragging ? this.handleMouseUp : Function.noop}, 
+
+					/* image layers */
+					layers,
+
+					/* control layers */
+					ControlLayer( {layer:this.props.selectedLayer, 
+						handleDrag:this.handleDrag, 
+						update:this.props.updateLayer})
+				)
+			   );
+	}
+});
+
+var LayerControls = React.createClass({displayName: 'LayerControls',
+	render: function() {
+		return React.DOM.div( {className:"layer-controls"}
+
+		);
+	}
+});
+
+var ImageSidebar = React.createClass({displayName: 'ImageSidebar',
+	render: function() {
+		return React.DOM.div( {className:"image-sidebar"}, 
+			React.DOM.h1(null, "SVG Image Editor"),
+			React.DOM.div( {className:"add-layer"}, 
+				React.DOM.strong(null, "Add layer: " ),
+				React.DOM.button( {onClick:this.props.addLayer.bind(this, 'text')}, "Text"),
+				React.DOM.button( {onClick:this.props.addLayer.bind(this, 'rect')}, "Rect")
+			),
+
+			LayerControls( {layer:this.props.layer})
+		);
+	}
+});
+
+var ImageEditor = React.createClass({displayName: 'ImageEditor',
+	getInitialState: function() {
+		return { image: initialImage, selectedLayer: null };
 	},
 	updateLayer: function(layer, attrs) {
 		for (var k in attrs) {
@@ -118,31 +178,21 @@ var SVGEditor = React.createClass({displayName: 'SVGEditor',
 	selectLayer: function(layer) {
 		this.setState({ selectedLayer: layer });
 	},
+	addLayer: function(type) {
+		var layer = emptyLayerOfType(type);
+		this.state.image.layers.push(layer);
+		this.setState({ image: this.state.image });
+	},
 	render: function() {
-		var image = this.state.image;
-		var dragging = this.state.dragging;
-
-		var layers = image.layers.map(function(l) {
-			return Layer( {layer:l, selectLayer:this.selectLayer});
-		}.bind(this));
-
-		return React.DOM.svg( {className:dragging ? 'dragging' : 'not-dragging',
-						height:image.height, width:image.width,
-						onMouseMove:dragging ? this.handleMouseMove : Function.noop,
-						onMouseUp:dragging ? this.handleMouseUp : Function.noop}, 
-
-					/* image layers */
-					layers,
-
-					/* control layers */
-					ControlLayer( {layer:this.state.selectedLayer, 
-						handleDrag:this.handleDrag, 
-						update:this.updateLayer})
-				);
+		return React.DOM.div( {className:"image-editor"}, 
+					ImageSidebar( {layer:this.state.selectedLayer, addLayer:this.addLayer}),
+					ImagePreview( {image:this.state.image, selectedLayer:this.state.selectedLayer,
+						selectLayer:this.selectLayer, updateLayer:this.updateLayer} )
+			);
 	}
 });
 
-React.renderComponent(SVGEditor(null), document.body);
+React.renderComponent(ImageEditor(null), document.body);
 },{"./layers":1,"react":133}],3:[function(require,module,exports){
 // shim for using process in browser
 

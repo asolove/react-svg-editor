@@ -1,15 +1,47 @@
 body {
-	background: #333;
+	background: rgba(0,0,0,0.1);
+	margin: 0;
+	font-family: helvetica;
+}
+
+.image-sidebar {
+	position: absolute;
+	left: 0; top: 0; bottom: 0; width: 240px;
+	border-right: 1px solid #ccc;
+	background-color: white;
+}
+
+h1 {
+	font-size: 130%;
+	margin: 0px;
+	padding: 20px;
+	border-bottom: 1px solid #ddd;
+}
+
+.image-preview {
+	position: absolute;
+	left: 240px; top: 0; bottom: 0; right: 0px;
+}
+
+.add-layer {
+	padding: 20px;
+	border-bottom: 1px solid #ddd;
+}
+
+.add-layer button {
+
 }
 
 svg {
+	margin: 30px;
+	box-shadow: 0px 0px 5px rgba(0,0,0,0.6);
 	border: 1px solid #ddd;
-	background: white;
    -moz-user-select: none;
    -khtml-user-select: none;
    -webkit-user-select: none;
    -ms-user-select: none;
    user-select: none;
+   background-color: white;
 }
 
 svg.dragging { cursor: pointer; }
@@ -19,4 +51,8 @@ svg * { cursor: pointer;}
 rect.halo {
 	stroke: #4da9f0;
 	stroke-width: 1px;
+}
+
+svg text {
+	font-family: helvetica, sans-serif;
 }
