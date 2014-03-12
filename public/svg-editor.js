@@ -2,13 +2,47 @@
 /** @jsx React.DOM */
 var React = require("react");
 
-var Greeting = React.createClass({displayName: 'Greeting',
-	render: function(){
-		return React.DOM.h1(null, "Hello, ", this.props.name,"!");
+var image = {
+	width: 800,
+	height: 600,
+	layers: [
+		{ type: "text", x: 400, y: 300, r: 20, width: 200, height: 100, text: "Hello, world!"},
+		{ type: "text", x: 400, y: 300, r: 0, width: 200, height: 100, text: "Hello, world!"}
+	]
+};
+
+var transformFor = function(options) {
+	var r = "";
+	if(options.x || options.y) {
+		r += "translate(" + options.x + "," + options.y + ") ";
+	}
+	if(options.r) {
+		r += "rotate(" + options.r + "," + options.width/2 + "," + options.height/2 + ") ";
+	}
+	return r;
+}
+
+var TextLayer = React.createClass({displayName: 'TextLayer',
+	render: function() {
+		var layer = this.props.layer;
+		return React.DOM.g( {transform:transformFor(layer)}, 
+			React.DOM.text( {x:layer.width/2, y:layer.height/2, textAnchor:"middle"}, layer.text)
+		);
 	}
 });
 
-React.renderComponent(Greeting( {name:"Adam"}), document.body);
+var SVGEditor = React.createClass({displayName: 'SVGEditor',
+	render: function() {
+		var layers = this.props.image.layers.map(function(l) {
+			return TextLayer( {layer:l});
+		});
+		return React.DOM.svg( {height:this.props.image.height, width:this.props.image.width}, 
+			layers
+		);
+	}
+});
+
+React.renderComponent(SVGEditor( {image:image}), document.body);
 },{"react":132}],2:[function(require,module,exports){
 // shim for using process in browser
 
@@ -1973,6 +2007,7 @@ var DefaultDOMPropertyConfig = {
     strokeLinecap: MUST_USE_ATTRIBUTE,
     strokeWidth: MUST_USE_ATTRIBUTE,
     transform: MUST_USE_ATTRIBUTE,
+    textAnchor: MUST_USE_ATTRIBUTE,
     version: MUST_USE_ATTRIBUTE,
     viewBox: MUST_USE_ATTRIBUTE,
     x1: MUST_USE_ATTRIBUTE,
@@ -1992,6 +2027,7 @@ var DefaultDOMPropertyConfig = {
     stopOpacity: 'stop-opacity',
     strokeLinecap: 'stroke-linecap',
     strokeWidth: 'stroke-width',
+    textAnchor: 'text-anchor',
     viewBox: 'viewBox'
   },
   DOMPropertyNames: {
