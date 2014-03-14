@@ -188,9 +188,28 @@ var ControlLayer = exports.ControlLayer = React.createClass({displayName: 'Contr
 		if(!this.props.layer) return React.DOM.g(null);
 		var layer = this.props.layer;
 		var halo = { type: 'rect', className: 'halo', position: layer.position };
-		var child = this.transferPropsTo(concreteClassForType[layer.type]());
+
+		var controlLineSize = 1;
+		var controlPointSize = 10;
+		var controlPointOffset = (controlPointSize - controlLineSize) / 2;
+		var rotationBarHeight = 30;
+		var width = layer.position.width;
+		var height = layer.position.height;
+
+		var controlPointLocations = [[-controlPointOffset, -controlPointOffset],
+									 [-controlPointOffset, height-controlPointOffset],
+									 [width-controlPointOffset, -controlPointOffset],
+									 [width-controlPointOffset, height-controlPointOffset],
+									 [(width-controlLineSize)/2-controlPointOffset, -rotationBarHeight]];
+
+		var controlPoints = controlPointLocations.map(function(location){
+			return React.DOM.rect( {className:"control-point", x:location[0], y:location[1], height:controlPointSize, width:controlPointSize});
+		});
+
 		return React.DOM.g( {transform:transformFor(layer.position), onMouseDown:this.handleMouseDown}, 
-				  RectLayer( {layer:halo})
+				  RectLayer( {layer:halo}),
+				  controlPoints,
+				  React.DOM.rect( {className:"rotation-line", x:(width-controlLineSize)/2, y:-rotationBarHeight, height:rotationBarHeight, width:controlLineSize})
 				);
 	}
 });

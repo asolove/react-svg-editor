@@ -61,6 +61,11 @@ rect.halo {
 	stroke-width: 1px;
 }
 
+.control-point,
+.rotation-line {
+	fill: #4da9f0;
+}
+
 svg text {
 	font-family: helvetica, sans-serif;
 }
