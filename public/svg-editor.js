@@ -113,6 +113,13 @@ var ImageSidebar = exports.ImageSidebar = React.createClass({displayName: 'Image
 
 var React = require("react");
 
+// Control style constants
+
+var controlLineSize = 1;
+var controlPointSize = 10;
+var controlPointOffset = (controlPointSize - controlLineSize) / 2;
+var rotationBarHeight = 30;
+
 var transformFor = function(options) {
 	var r = "";
 	if(options.x || options.y) {
@@ -161,6 +168,49 @@ var Layer = exports.Layer = React.createClass({displayName: 'Layer',
 	}
 });
 
+var ControlPoint = React.createClass({displayName: 'ControlPoint',
+	render: function() {
+		return React.DOM.rect( {className:"control-point", 
+					x:this.props.x-controlPointOffset, 
+					y:this.props.y-controlPointOffset, 
+					height:controlPointSize, 
+					width:controlPointSize});
+	}
+});
+
+var RotationControl = React.createClass({displayName: 'RotationControl',
+	handleMouseDown: function(e) {
+		console.log("hello!")
+		e.stopPropagation();
+		e.preventDefault();
+		this.props.handleDrag(true, this.handleDragMove, handleDragEnd);
+	},
+	handleDragMove: function(e) {
+		console.log(e.pageX, e.pageY);
+	},
+	handleDragEnd: function(e) {
+
+	},
+	render: function() {
+		var layer = this.props.layer;
+		var pos = layer.position;
+
+		var width = layer.position.width;
+		var height = layer.position.height;
+		var center = (width-controlLineSize)/2;
+
+		return React.DOM.g(null, 
+				React.DOM.rect( {className:"rotation-line", 
+					x:center, 
+					y:-rotationBarHeight, 
+					height:rotationBarHeight, 
+					width:controlLineSize}),
+				ControlPoint( {x:center, y:-rotationBarHeight, onMouseDown:this.handleMouseDown} )
+			   );
+
+	}
+});
+
 var ControlLayer = exports.ControlLayer = React.createClass({displayName: 'ControlLayer',
 	getInitialState: function() {
 		return { mouseDown: false, lastMouseX: 0, lastMouseY: 0 };
@@ -175,48 +225,43 @@ var ControlLayer = exports.ControlLayer = React.createClass({displayName: 'Contr
 	},
 	handleMouseMove: function(e) {
 		var layer = this.props.layer;
-		var newPosition = Object.create(layer.position);
-		newPosition.x += e.pageX - this.state.lastMouseX;
-		newPosition.y += e.pageY - this.state.lastMouseY;
+
+		layer.position.x += e.pageX - this.state.lastMouseX;
+		layer.position.y += e.pageY - this.state.lastMouseY;
 
 		this.props.update(layer, { 
-			position: newPosition
+			position: layer.position
 		});
 		this.setState({ lastMouseX: e.pageX, lastMouseY: e.pageY });
 	},	
 	render: function() {
 		if(!this.props.layer) return React.DOM.g(null);
 		var layer = this.props.layer;
-		var halo = { type: 'rect', className: 'halo', position: layer.position };
+		var pos = layer.position;
 
-		var controlLineSize = 1;
-		var controlPointSize = 10;
-		var controlPointOffset = (controlPointSize - controlLineSize) / 2;
-		var rotationBarHeight = 30;
 		var width = layer.position.width;
 		var height = layer.position.height;
 
-		var controlPointLocations = [[-controlPointOffset, -controlPointOffset],
-									 [-controlPointOffset, height-controlPointOffset],
-									 [width-controlPointOffset, -controlPointOffset],
-									 [width-controlPointOffset, height-controlPointOffset],
-									 [(width-controlLineSize)/2-controlPointOffset, -rotationBarHeight]];
+		var controlPointLocations = [[0, 0], [width, 0], [0, height], [width, height]];
 
 		var controlPoints = controlPointLocations.map(function(location){
-			return React.DOM.rect( {className:"control-point", x:location[0], y:location[1], height:controlPointSize, width:controlPointSize});
+			return ControlPoint({ x: location[0], y: location[1] });
 		});
 
 		return React.DOM.g( {transform:transformFor(layer.position), onMouseDown:this.handleMouseDown}, 
-				  RectLayer( {layer:halo}),
+				  React.DOM.rect( {className:"halo", x:"0", y:"0", width:pos.width, height:pos.height}),
 				  controlPoints,
-				  React.DOM.rect( {className:"rotation-line", x:(width-controlLineSize)/2, y:-rotationBarHeight, height:rotationBarHeight, width:controlLineSize})
-				);
+				  RotationControl( {layer:layer, handleDrag:this.props.handleDrag} )
+				 );
 	}
 });
 },{"react":135}],4:[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require("react");
+
+// only used to trigger React Dev Tools
+window.React = React;
 
 var ImagePreview = require("./image_preview").ImagePreview;
 var ImageSidebar = require("./image_sidebar").ImageSidebar;
@@ -227,7 +272,7 @@ var initialImage = {
 	height: 600,
 	layers: [
 		{ type: "text", position: { x: 400, y: 300, r: 20, width: 200, height: 100 }, text: "Hello, world!"},
-		{ type: "text", position: { x: 400, y: 300, r: 0, width: 200, height: 100 }, text: "Hello, world!"},
+		{ type: "text", position: { x: 400, y: 300, r: 90, width: 200, height: 100 }, text: "Hello, world!"},
 		{ type: "rect", position: { x: 20, y: 20, r: 50, width: 20, height: 50 }, fill: "green" }
 	]
 };
@@ -270,7 +315,7 @@ var ImageEditor = React.createClass({displayName: 'ImageEditor',
 	}
 });
 
-React.renderComponent(ImageEditor(null), document.body);
+React.renderComponent(ImageEditor(null), document.getElementById("wrap"));
 },{"./image_preview":1,"./image_sidebar":2,"react":135}],5:[function(require,module,exports){
 // shim for using process in browser
 

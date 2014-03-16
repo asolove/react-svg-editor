@@ -57,6 +57,7 @@ svg.dragging { cursor: pointer; }
 svg * { cursor: pointer;}
 
 rect.halo {
+	fill: transparent;
 	stroke: #4da9f0;
 	stroke-width: 1px;
 }
