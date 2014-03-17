@@ -8,6 +8,6 @@
     "watchify": "^0.6.1"
   },
   "scripts": {
-  	"start": "watchify -t reactify lib/svg_editor.js -o public/svg-editor.js"
+  	"start": "watchify -t reactify demo.jsx -o public/svg-editor.js"
   }
 }
