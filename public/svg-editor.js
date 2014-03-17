@@ -84,7 +84,6 @@ var ControlLayer = React.createClass({displayName: 'ControlLayer',
 	},
 	handleMouseMove: function(e) {
 		var layer = this.props.layer;
-
 		layer.position.x += e.pageX - this.state.lastMouseX;
 		layer.position.y += e.pageY - this.state.lastMouseY;
 
@@ -109,8 +108,13 @@ var ControlLayer = React.createClass({displayName: 'ControlLayer',
 
 		return React.DOM.g( {transform:h.transformFor(layer.position), onMouseDown:this.handleMouseDown}, 
 				  React.DOM.rect( {className:"halo", x:"0", y:"0", width:pos.width, height:pos.height}),
+
 				  controlPoints,
-				  RotationControl( {layer:layer, handleDrag:this.props.handleDrag} )
+				  
+				  RotationControl(
+				  	{layer:layer,
+				  	update:this.props.update,
+				  	handleDrag:this.props.handleDrag} )
 				 );
 	}
 });
@@ -126,7 +130,8 @@ var ControlPoint = React.createClass({displayName: 'ControlPoint',
 					x:this.props.x-ControlPoint.controlPointOffset, 
 					y:this.props.y-ControlPoint.controlPointOffset, 
 					height:ControlPoint.controlPointSize, 
-					width:ControlPoint.controlPointSize});
+					width:ControlPoint.controlPointSize,
+					onMouseDown:this.props.onMouseDown});
 	}
 });
 
@@ -149,9 +154,19 @@ var ImagePreview = React.createClass({displayName: 'ImagePreview',
 	},
 	handleDrag: function(dragging, onMove, onUp) {
 		console.log("Dragging?", dragging);
-		this.handleMouseMove = onMove;
-		this.handleMouseUp = onUp;
+		this.mouseMoveHandler = onMove;
+		this.mouseUpHandler = onUp;
 		this.setState({ dragging: dragging });
+	},
+	handleMouseMove: function(e) {
+		e.canvasX = e.pageX - 272;
+		e.canvasY = e.pageY - 30;
+		this.mouseMoveHandler.apply(null, arguments);
+	},
+	handleMouseUp: function(e) {
+		e.canvasX = e.pageX - 272;
+		e.canvasY = e.pageY - 30;
+		this.mouseUpHandler.apply(null, arguments);
 	},
 	render: function() {
 		var image = this.props.image;
@@ -165,8 +180,8 @@ var ImagePreview = React.createClass({displayName: 'ImagePreview',
 
 				React.DOM.svg( {className:dragging ? 'dragging' : 'not-dragging',
 						height:image.height, width:image.width,
-						onMouseMove:this.handleMouseMove ? this.handleMouseMove : Function.noop,
-						onMouseUp:this.handleMouseUp ? this.handleMouseUp : Function.noop}, 
+						onMouseMove:this.state.dragging ? this.handleMouseMove : Function.noop,
+						onMouseUp:this.state.dragging ? this.handleMouseUp : Function.noop}, 
 
 					/* image layers */
 					layers,
@@ -233,16 +248,20 @@ var ControlPoint = require("./ControlPoint");
 
 var RotationControl = React.createClass({displayName: 'RotationControl',
 	handleMouseDown: function(e) {
-		console.log("hello!")
 		e.stopPropagation();
 		e.preventDefault();
-		this.props.handleDrag(true, this.handleDragMove, handleDragEnd);
+		this.props.handleDrag(true, this.handleDragMove, this.handleDragEnd);
 	},
 	handleDragMove: function(e) {
-		console.log(e.pageX, e.pageY);
+		var pos = this.props.layer.position;
+		var dx = e.canvasX - pos.x;
+		var dy = e.canvasY - pos.y;
+
+		pos.r = Math.atan2(dy, dx) * 360 / 2 / Math.PI + 90;
+		this.props.update({ position: pos });
 	},
 	handleDragEnd: function(e) {
-
+		this.props.handleDrag(false);
 	},
 	render: function() {
 		var layer = this.props.layer;
@@ -258,7 +277,9 @@ var RotationControl = React.createClass({displayName: 'RotationControl',
 					y:-ControlPoint.rotationBarHeight, 
 					height:ControlPoint.rotationBarHeight, 
 					width:ControlPoint.lineSize}),
-				ControlPoint( {x:center, y:-ControlPoint.rotationBarHeight, onMouseDown:this.handleMouseDown} )
+				ControlPoint( {x:center, 
+					y:-ControlPoint.rotationBarHeight, 
+					onMouseDown:this.handleMouseDown} )
 			   );
 
 	}
@@ -271,7 +292,7 @@ module.exports = RotationControl;
 var transformFor = exports.transformFor = function(options) {
 	var r = "";
 	if(options.x || options.y) {
-		r += "translate(" + options.x + "," + options.y + ") ";
+		r += "translate(" + (options.x-options.width/2) + "," + (options.y-options.height/2) + ") ";
 	}
 	if(options.r) {
 		r += "rotate(" + options.r + "," + options.width/2 + "," + options.height/2 + ") ";
