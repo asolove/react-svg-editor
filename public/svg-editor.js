@@ -93,12 +93,17 @@ var ControlLayer = React.createClass({displayName: 'ControlLayer',
 		this.setState({ lastMouseX: e.pageX, lastMouseY: e.pageY });
 	},	
 	handleResizeStart: function(e) {
-		console.log("resize start");
-		this.props.handleDrag(true, this.handleResizeMove, this.handleResizeEnd);
+		e.stopPropagation();
+		this.props.handleDrag(true, this.handleResizeMove, this.handleResizeEnd, this.refs.container);
 	},
 	handleResizeMove: function(e) {
 		var layer = this.props.layer;
-		layer.position.scale = 2;
+		var pos = layer.position;
+
+		var z0 = Math.sqrt(Math.pow(pos.width/2, 2) + Math.pow(pos.height/2, 2));
+		var z1 = Math.sqrt(Math.pow(e.layerX, 2) + Math.pow(e.layerY, 2));
+
+		pos.scale *= z1 / z0;
 
 		this.props.update(layer, {
 			position: layer.position
@@ -121,7 +126,7 @@ var ControlLayer = React.createClass({displayName: 'ControlLayer',
 			return ControlPoint({ x: location[0], y: location[1], onMouseDown: this.handleResizeStart });
 		}.bind(this));
 
-		return React.DOM.g( {transform:h.transformFor(layer.position), onMouseDown:this.handleMouseDown}, 
+		return React.DOM.g( {ref:"container", transform:h.transformFor(layer.position), onMouseDown:this.handleMouseDown}, 
 				  React.DOM.rect( {className:"halo", x:-pos.width/2, y:-pos.height/2, width:pos.width, height:pos.height}),
 
 				  controlPoints,
@@ -248,7 +253,7 @@ var RectLayer = exports.RectLayer = React.createClass({displayName: 'RectLayer',
 		var pos = layer.position;
 		var style = { fill: layer.fill || "transparent" };
 		return React.DOM.rect( {className:layer.className, style:style,
-					x:-pos.width/2, y:-pos.width/2, width:pos.width, height:pos.height});
+					x:-pos.width/2, y:-pos.height/2, width:pos.width, height:pos.height});
 	}
 });
 
