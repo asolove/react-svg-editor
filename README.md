@@ -15,12 +15,12 @@ Setup
 To do
 -----
 
-[x] - Text layer
-[x] - Rectangle layer
-[x] - Movement, rotation, scaling
-[ ] - Layer stretching
-[ ] - Control size independent of layer scaling/stretching
-[ ] - Groups with multiple children
-[ ] - Style options (fonts, sizes, borders, backgrounds...)
-[ ] - Image layer
-[ ] - Layer clipping
+- [x] Text layer
+- [x] Rectangle layer
+- [x] Movement, rotation, scaling
+- [ ] Layer stretching
+- [ ] Control size independent of layer scaling/stretching
+- [ ] Groups with multiple children
+- [ ] Style options (fonts, sizes, borders, backgrounds...)
+- [ ] Image layer
+- [ ] Layer clipping
